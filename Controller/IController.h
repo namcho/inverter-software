@@ -13,7 +13,7 @@
 template <class TypeNumber>
 class IController {
 public:
-	IController(uint16_t len_in, uint16_t len_out);
+	IController();
 	virtual ~IController();
 
 	virtual void controlAlgorithm() const = 0;
