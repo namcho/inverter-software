@@ -42,9 +42,18 @@ bool LedIndicator::hardwareInit(){
 	GPIOB->OSPEEDR |= (3 << 16);	// PB.8 in full speed mode
 
 	// LD5 -> PB9
+	GPIOB->MODER &= (3 << 18);
+	GPIOB->MODER |= (1 << 18);		// PB.9 output
+	GPIOB->OTYPER &= ~(1 << 9);		// Push-pull
+	GPIOB->OSPEEDR &= ~(3 << 18);
+	GPIOB->OSPEEDR |= (3 << 18);	// Full speed
 
 	// LD6 -> PB7
-
+	GPIOB->MODER &= (3 << 14);
+	GPIOB->MODER |= (1 << 14);
+	GPIOB->OTYPER &= ~(1 << 7);
+	GPIOB->OSPEEDR &= ~(3 << 14);
+	GPIOB->OSPEEDR |= (3 << 14);
 
 
 	return true;
