@@ -10,7 +10,6 @@
 IHardware::IHardware() {
 	// TODO Auto-generated constructor stub
 
-	hardwareIdGenerate();
 }
 
 IHardware::~IHardware() {
@@ -24,7 +23,7 @@ std::string IHardware::getHardwareDescriber(){
 
 uint16_t IHardware::getHardwareId(){
 
-	return this->id;
+	return objectCount;
 }
 
 bool IHardware::prerequest(){
@@ -39,5 +38,4 @@ bool IHardware::postOperations(){
 
 void IHardware::hardwareIdGenerate(){
 
-	this->id++;
 }

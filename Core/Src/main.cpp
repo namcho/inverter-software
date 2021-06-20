@@ -19,12 +19,14 @@
 #include "main.h"
 #include <stm32f3xx_ll_utils.h>
 #include "stm32f3xx_it.h"
-#include "../../HardwareInit/leds_init.h"
+#include "../Indicators/LedIndicator.h"
 
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+
+LedIndicator leds;
 
 int main(void)
 {
@@ -37,14 +39,17 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
 
-  ledsInit();
+//  ledsInit();
+  leds.hardwareInit();
+  leds.setLedBlinkPeriod(200);
 
   while (1){
 
-	  GPIOB->BSRR = (1 << 6);
-	  DelayMs(500);
-	  GPIOB->BSRR = (1 << 22);
-	  DelayMs(500);
+//	  GPIOB->BSRR = (1 << 6);
+//	  DelayMs(500);
+//	  GPIOB->BSRR = (1 << 22);
+//	  DelayMs(500);
+	  leds.indicationStateMachine();
   }
 
 }

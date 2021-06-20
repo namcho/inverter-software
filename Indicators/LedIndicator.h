@@ -15,8 +15,8 @@ public:
 	LedIndicator();
 	virtual ~LedIndicator();
 
-	bool hardwareDeinit();
-	bool hardwareInit();
+	virtual bool hardwareDeinit() override;
+	virtual bool hardwareInit() override;
 
 	void indicationStateMachine();
 	void setLedBlinkPeriod(uint32_t ms);
@@ -28,8 +28,8 @@ protected:
 		LED_STATE_ON
 	}ledState_e;
 
-	bool prerequest();
-	bool postOperations();
+	bool prerequest() override;
+	bool postOperations() override ;
 	void setLedState(ledState_e LED_STATE_x);
 private:
 

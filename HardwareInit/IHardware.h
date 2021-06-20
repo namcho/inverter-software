@@ -13,11 +13,12 @@
 
 class IHardware {
 public:
+
 	IHardware();
 	virtual ~IHardware();
 
-	virtual bool hardwareDeinit() const = 0;
-	virtual bool hardwareInit() const = 0;
+	virtual bool hardwareDeinit() = 0;
+	virtual bool hardwareInit() = 0;
 
 	std::string getHardwareDescriber();
 	uint16_t getHardwareId();
@@ -30,9 +31,8 @@ protected:
 	virtual void hardwareIdGenerate();
 
 private:
-
+	static uint16_t objectCount;
 	std::string describer;
-	static uint16_t id;
 };
 
 #endif /* IHARDWARE_H_ */
