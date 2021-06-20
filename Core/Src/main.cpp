@@ -17,6 +17,9 @@
   ******************************************************************************
   */
 #include "main.h"
+#include "../../HarwareInit/leds_init.h"
+#include <stm32f3xx_ll_utils.h>
+#include "stm32f3xx_it.h"
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -34,9 +37,14 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
 
+  ledsInit();
 
   while (1){
 
+	  GPIOB->BSRR = (1 << 6);
+	  DelayMs(500);
+	  GPIOB->BSRR = (1 << 22);
+	  DelayMs(500);
   }
 
 }
@@ -111,6 +119,22 @@ void Error_Handler(void)
   {
   }
   /* USER CODE END Error_Handler_Debug */
+}
+
+void DelayMs(uint32_t ms){
+
+	uint32_t ticker;
+	uint32_t tick_end;
+
+	tick_end = getTicker() + ms;
+
+	for(;;){
+
+		ticker = getTicker();
+		if(ticker >= tick_end){
+			break;
+		}
+	}
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -21,46 +21,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f3xx_it.h"
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-/* USER CODE END Includes */
+#include <stdint.h>
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
+uint32_t systick;
 
-/* USER CODE END TD */
+uint32_t getTicker(){
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/* External variables --------------------------------------------------------*/
-
-/* USER CODE BEGIN EV */
-
-/* USER CODE END EV */
-
+	return systick;
+}
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
@@ -183,13 +151,8 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  /* USER CODE BEGIN SysTick_IRQn 0 */
 
-  /* USER CODE END SysTick_IRQn 0 */
-
-  /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  /* USER CODE END SysTick_IRQn 1 */
+	systick++;
 }
 
 /******************************************************************************/

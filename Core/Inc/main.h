@@ -43,6 +43,7 @@ extern "C" {
 #endif /* USE_FULL_ASSERT */
 
 void Error_Handler(void);
+void DelayMs(uint32_t ms);
 
 /* Private defines -----------------------------------------------------------*/
 #ifndef NVIC_PRIORITYGROUP_0
