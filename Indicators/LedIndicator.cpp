@@ -7,6 +7,7 @@
 
 #include "LedIndicator.h"
 #include <stm32f334x8.h>
+#include "stm32f3xx_it.h"
 
 LedIndicator::LedIndicator() {
 	// TODO Auto-generated constructor stub
@@ -57,4 +58,49 @@ bool LedIndicator::hardwareInit(){
 
 
 	return true;
+}
+
+void LedIndicator::indicationStateMachine(){
+
+
+	if(state_e == LED_STATE_OFF){
+
+		GPIOB->BSRR = (1 << 22);
+		GPIOB->BSRR = (1 << 24);
+		GPIOB->BSRR = (1 << 25);
+		GPIOB->BSRR = (1 << 23);
+
+		setLedState(LED_STATE_WAIT);
+		ticker_end = getTicker() + period;
+	}
+	else if(state_e == LED_STATE_WAIT){
+
+		if(getTicker() >= ticker_end){
+
+			setLedState((statePrev_e == LED_STATE_OFF) ? LED_STATE_ON : LED_STATE_OFF);
+		}
+	}
+	else if(state_e == LED_STATE_ON){
+
+		GPIOB->BSRR = (1 << 6);
+		GPIOB->BSRR = (1 << 8);
+		GPIOB->BSRR = (1 << 9);
+		GPIOB->BSRR = (1 << 7);
+
+		setLedState(LED_STATE_WAIT);
+		ticker_end = getTicker() + period;
+	}
+	else{}
+
+}
+
+void LedIndicator::setLedBlinkPeriod(uint32_t ms){
+
+	period = ms;
+}
+
+void LedIndicator::setLedState(ledState_e LED_STATE_x){
+
+	statePrev_e = state_e;
+	state_e = LED_STATE_x;
 }
