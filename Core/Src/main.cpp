@@ -39,16 +39,11 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
 
-//  ledsInit();
   leds.hardwareInit();
   leds.setLedBlinkPeriod(200);
 
   while (1){
 
-//	  GPIOB->BSRR = (1 << 6);
-//	  DelayMs(500);
-//	  GPIOB->BSRR = (1 << 22);
-//	  DelayMs(500);
 	  leds.indicationStateMachine();
   }
 
