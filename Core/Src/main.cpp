@@ -17,9 +17,9 @@
   ******************************************************************************
   */
 #include "main.h"
-#include "../../HarwareInit/leds_init.h"
 #include <stm32f3xx_ll_utils.h>
 #include "stm32f3xx_it.h"
+#include "../../HardwareInit/leds_init.h"
 
 
 /* Private function prototypes -----------------------------------------------*/
