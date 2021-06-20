@@ -1,3 +1,4 @@
 hrtim-test.ioc
 Debug/
 Release/
+*.launch
