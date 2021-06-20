@@ -24,6 +24,7 @@
 #include <stdint.h>
 
 uint32_t systick;
+uint8_t signal_ms;
 
 uint32_t getTicker(){
 
@@ -151,7 +152,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-
+	signal_ms = 1;
 	systick++;
 }
 

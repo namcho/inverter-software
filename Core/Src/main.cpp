@@ -21,6 +21,8 @@
 #include "stm32f3xx_it.h"
 #include "../Indicators/LedIndicator.h"
 
+// Extern variables
+extern uint8_t signal_ms;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -40,11 +42,17 @@ int main(void)
   MX_GPIO_Init();
 
   leds.hardwareInit();
-  leds.setLedBlinkPeriod(200);
+  leds.setLedBlinkPeriod(50);
 
   while (1){
 
-	  leds.indicationStateMachine();
+	  if(signal_ms){
+
+		  leds.indicationStateMachine();
+
+		  signal_ms = 0;
+	  }
+
   }
 
 }
