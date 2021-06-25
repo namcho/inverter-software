@@ -73,7 +73,7 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_2, LL_RCC_PLL_MUL_9);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_2, LL_RCC_PLL_MUL_9);	// PLL-CLK 72MHz eger HSE 16MHz ise
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
