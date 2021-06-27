@@ -30,13 +30,20 @@ bool PwmGenerator::hardwareInit(){
 
 	/// HRTIM FAULT1 setting
 
-
 	/// HRTIM clock enable and calibration
-	RCC->CFGR3 |= (1 << 12);	// HRTIM1SW bit is set, so HRTIM will have 144MHz
 	RCC->APB2ENR |= (1 << 29);	// HRTIM clock is enabled
+	RCC->CFGR3 |= (1 << 12);	// HRTIM1SW bit is set, so HRTIM will have 144MHz
+
 	HRTIM1->sCommonRegs.DLLCR |= 0x01;	// Start calibration
 	while(!((HRTIM1->sCommonRegs.ISR >> 16) && 0x01));	// Wait for calibration
 	HRTIM1->sCommonRegs.DLLCR |= (1 << 2);	// Periodic calibration is enabled
+
+
+	HRTIM1->sCommonRegs.OENR |= 0x000F;		// CHA1, CHA2, CHB1 and CHB2 is enabled
+
+	// If wanna start HRTIM with DMA support, we need to set specific EN bit in CR register...
+
+	// Built-in comperators must be initialized(if need to use) before output routed to HRTIM
 
 
 	/// GPIO pin AF(13) config - PA8 -> CHA1, PA9 -> CHA2, PA10 -> CHB1, PA11 -> CHB2
@@ -57,11 +64,11 @@ bool PwmGenerator::hardwareInit(){
 	GPIOA->MODER |= (2 << 18);
 	GPIOA->OTYPER &= ~(1 << 9);		// Push pull
 	GPIOA->OSPEEDR |= (3 << 18);
-	GPIOA->AFR[1] &= (15 << 4);
+	GPIOA->AFR[1] &= ~(15 << 4);
 	GPIOA->AFR[1] |= (13 << 4);		// AF13
 
 	// GPIOA10 set as HRTIM1-CHB1 output
-	GPIOA->MODER &= (3 << 20);
+	GPIOA->MODER &= ~(3 << 20);
 	GPIOA->MODER |= (2 << 20);
 	GPIOA->OTYPER &= ~(1 << 10);	// Push pull
 	GPIOA->OSPEEDR |= (3  << 20);

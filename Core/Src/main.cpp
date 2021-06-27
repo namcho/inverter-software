@@ -20,6 +20,7 @@
 #include <stm32f3xx_ll_utils.h>
 #include "stm32f3xx_it.h"
 #include "../Indicators/LedIndicator.h"
+#include "../../PwmGenerator/PwmGenerator.h"
 
 // Extern variables
 extern uint8_t signal_ms;
@@ -29,6 +30,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 
 LedIndicator leds;
+PwmGenerator pwmGenerator;
 
 int main(void)
 {
@@ -44,6 +46,10 @@ int main(void)
   leds.hardwareInit();
   leds.setLedBlinkPeriod(50);
 
+  pwmGenerator.hardwareInit();
+
+
+
   while (1){
 
 	  if(signal_ms){
@@ -51,6 +57,10 @@ int main(void)
 		  leds.indicationStateMachine();
 
 		  signal_ms = 0;
+
+		  (getTicker() % 2) ?
+		  HRTIM1->sTimerxRegs[0].SETx1R = HRTIM_SET1R_SST:
+		  HRTIM1->sTimerxRegs[0].RSTx1R = HRTIM_RST1R_SRT;
 	  }
 
   }
@@ -73,7 +83,13 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_2, LL_RCC_PLL_MUL_9);	// PLL-CLK 72MHz eger HSE 16MHz ise
+
+//  LL_RCC_HSI_Enable();
+//  while(LL_RCC_HSI_IsReady() != 1){
+//
+//  }
+
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_2, LL_RCC_PLL_MUL_16);	// PLL-CLK 72MHz eger HSE 16MHz ise
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
