@@ -58,9 +58,9 @@ int main(void)
 
 		  signal_ms = 0;
 
-		  (getTicker() % 2) ?
-		  HRTIM1->sTimerxRegs[0].SETx1R = HRTIM_SET1R_SST:
-		  HRTIM1->sTimerxRegs[0].RSTx1R = HRTIM_RST1R_SRT;
+//		  (getTicker() % 2 ==  0) ?
+//		  HRTIM1->sTimerxRegs[0].SETx1R = HRTIM_SET1R_SST:
+//		  HRTIM1->sTimerxRegs[0].RSTx1R = HRTIM_RST1R_SRT;
 	  }
 
   }

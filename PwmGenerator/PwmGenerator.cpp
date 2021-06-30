@@ -39,7 +39,29 @@ bool PwmGenerator::hardwareInit(){
 	HRTIM1->sCommonRegs.DLLCR |= (1 << 2);	// Periodic calibration is enabled
 
 
-	HRTIM1->sCommonRegs.OENR |= 0x000F;		// CHA1, CHA2, CHB1 and CHB2 is enabled
+	// TIMA init
+	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 3); 	// CONT bit set
+	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 27);	// PREEN is set
+	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 18);	// TxRSTU is set; Timerx roll-over reset is activated
+	HRTIM1->sTimerxRegs[0].PERxR = 40959;		// 100kHz
+	HRTIM1->sTimerxRegs[0].CMP1xR = 10279;		// %25 Duty
+	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 2);	// Set source is PER
+	HRTIM1->sTimerxRegs[0].RSTx1R |= (1 << 3);	// Reset source is CMP1
+	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 0);	// Set CHA1 output GPIO for proper startup
+	HRTIM1->sTimerxRegs[0].RSTx2R |= (1 << 0);	// Reset CHA2 output GPIO for proper startup
+	HRTIM1->sTimerxRegs[0].OUTxR |= (1 << 8);	// Deadtime is actived between CHA1 and CHA2
+
+	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 10);	// DTPRSSC is 2
+	HRTIM1->sTimerxRegs[0].DTxR |= 100;			// DTRx is 100; Rising edge deadtime
+	HRTIM1->sTimerxRegs[0].DTxR = (100 << 16);	// DTFx is 100; Falling edge deadtime
+	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 4);	// CHA1 is inactive when fault occurs
+	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 20);	// CHA2 is inactive when fault occurs
+//	HRTIM1->sTimerxRegs[0].DTxR |= (1 << 19);	// CHA2 is in active when in IDLE state
+	HRTIM1->sTimerxRegs[0].DTxR |= (1 << 8);	// Deadtime enable
+
+	HRTIM1->sTimerxRegs[0].RSTx1R |= HRTIM_RST1R_SRT;
+	HRTIM1->sTimerxRegs[0].SETx2R |= HRTIM_SET2R_SST;
+
 
 	// If wanna start HRTIM with DMA support, we need to set specific EN bit in CR register...
 
@@ -85,6 +107,10 @@ bool PwmGenerator::hardwareInit(){
 
 	/// Other perhipherals can be initialized
 	// NVIC, DMA, Comperator vs...
+
+	HRTIM1->sCommonRegs.OENR |= 0x000F;			// CHA1, CHA2, CHB1 and CHB2 is enabled
+	HRTIM1->sCommonRegs.CR2 |= (1 << 1);		// Software update for TA to transfer preload -> active
+	HRTIM1->sMasterRegs.MCR |= (1 << 17);		// TA is enabled
 
 	return true;
 }
