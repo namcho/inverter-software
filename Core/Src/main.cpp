@@ -49,7 +49,6 @@ int main(void)
   pwmGenerator.hardwareInit();
 
 
-
   while (1){
 
 	  if(signal_ms){
@@ -107,8 +106,8 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_Init1msTick(72000000);
-  LL_SetSystemCoreClock(72000000);
+  LL_Init1msTick(64000000);
+  LL_SetSystemCoreClock(64000000);
 }
 
 /**
