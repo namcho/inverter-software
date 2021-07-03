@@ -7,6 +7,12 @@
 
 #include "PwmGenerator.h"
 #include <stm32f334x8.h>
+#include <math.h>
+
+#define F_HRTIM			128000			// kHz; (HSE / PRE_DIV_HSE) * (PLL_N) * (2) = (8MHz / 2) * (16) * (2)
+#define F_HRCK			(F_HRTIM * 32)	// kHZ; DLL value is 32 for HRTIM1
+#define MATH_PI 		3.14f			// PI constant
+#define DEFAULT_MA		0.77f			// Default amplitude modulation index Ma/Mc
 
 PwmGenerator::PwmGenerator() {
 	// TODO Auto-generated constructor stub
@@ -43,8 +49,9 @@ bool PwmGenerator::hardwareInit(){
 	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 3); 	// CONT bit set
 	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 27);	// PREEN is set
 	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 18);	// TxRSTU is set; Timerx roll-over reset is activated
-	HRTIM1->sTimerxRegs[0].PERxR = 40959;		// 100kHz
-	HRTIM1->sTimerxRegs[0].CMP1xR = 10279;		// %25 Duty
+
+//	HRTIM1->sTimerxRegs[0].PERxR = 40959;		// 100kHz
+//	HRTIM1->sTimerxRegs[0].CMP1xR = 10279;		// %25 Duty
 	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 2);	// Set source is PER
 	HRTIM1->sTimerxRegs[0].RSTx1R |= (1 << 3);	// Reset source is CMP1
 	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 0);	// Set CHA1 output GPIO for proper startup
@@ -62,7 +69,14 @@ bool PwmGenerator::hardwareInit(){
 	HRTIM1->sTimerxRegs[0].RSTx1R |= HRTIM_RST1R_SRT;
 	HRTIM1->sTimerxRegs[0].SETx2R |= HRTIM_SET2R_SST;
 
+	HRTIM1->sTimerxRegs[0].REPxR = 1;
+	HRTIM1->sTimerxRegs[0].TIMxDIER |= (1 << 4);	// Repetation interrupt is enabled.
+	NVIC->ISER[3] |= (1 << 4);
+	NVIC_EnableIRQ(HRTIM1_TIMA_IRQn);
 
+	setPWMFreq(100);
+	setPWMDeadtime(100);
+	setPWMCompare(getPWMPeriod() / 4, getPWMPeriod() / 2);
 	// If wanna start HRTIM with DMA support, we need to set specific EN bit in CR register...
 
 	// Built-in comperators must be initialized(if need to use) before output routed to HRTIM
@@ -77,6 +91,7 @@ bool PwmGenerator::hardwareInit(){
 	GPIOA->MODER &= ~(3 << 16);
 	GPIOA->MODER |= (2 << 16);
 	GPIOA->OTYPER &= ~(1 << 8);		// Push pull
+	GPIOA->OSPEEDR &= ~(3 << 16);
 	GPIOA->OSPEEDR |= (3 << 16);	// High speed
 	GPIOA->AFR[1] &= ~(15 << 0);
 	GPIOA->AFR[1] |= (13 << 0);		// AF13
@@ -112,7 +127,98 @@ bool PwmGenerator::hardwareInit(){
 	HRTIM1->sCommonRegs.CR2 |= (1 << 1);		// Software update for TA to transfer preload -> active
 	HRTIM1->sMasterRegs.MCR |= (1 << 17);		// TA is enabled
 
+	calculateSinusParameters(&sin0, 0.0f, 100, 10);
+	calculateSinusParameters(&sin180, 180.0f, 100, 10);
+
 	return true;
+}
+
+void PwmGenerator::setPWMPeriod(uint32_t period){
+
+	this->period_reg = period;
+
+	HRTIM1->sTimerxRegs[0].PERxR = this->period_reg - 1;
+	HRTIM1->sTimerxRegs[1].PERxR = this->period_reg - 1;
+}
+
+uint32_t PwmGenerator::getPWMPeriod(){
+
+	return this->period_reg;
+}
+
+void PwmGenerator::setPWMFreq(uint32_t freq){
+
+	this->freq = freq;
+
+	// Calculate pwm period register value for stm32f334 hrtim
+	setPWMPeriod(F_HRCK / freq);
+
+}
+
+uint32_t PwmGenerator::getPWMFreq(){
+
+	return this->freq;
+}
+
+void PwmGenerator::setPWMDeadtime(uint32_t dt_ns){
+
+	uint16_t psc;
+	uint16_t power;
+	float t_dtg;
+	float t_hrtim;
+	uint16_t dt_rising;
+	uint16_t dt_falling;
+
+	power = (HRTIM1->sTimerxRegs[0].DTxR >> 10) & 0x0007;
+	psc = (1 << power);
+
+	t_hrtim = 1.0/(F_HRTIM/1000000.0f);
+	t_dtg = (psc * t_hrtim / 8);
+	deadtime_reg = dt_ns / t_dtg;
+
+	dt_rising = deadtime_reg;
+	dt_falling = deadtime_reg;
+
+	HRTIM1->sTimerxRegs[0].DTxR &= ~(0x01FF01FF);
+	HRTIM1->sTimerxRegs[0].DTxR |= (dt_rising);
+	HRTIM1->sTimerxRegs[0].DTxR |= (dt_falling << 16);
+
+}
+
+uint32_t PwmGenerator::getPWMDeadtime(){
+
+	return this->deadtime_reg;
+}
+
+void PwmGenerator::runController(){
+
+	// Generate sinus duty values
+
+}
+
+void PwmGenerator::runStateMachine(){
+
+
+}
+
+void PwmGenerator::setPWMCompare(){
+
+	HRTIM1->sTimerxRegs[0].CMP1xR = compare1_reg + 0x0030;
+	HRTIM1->sTimerxRegs[1].CMP1xR = compare2_reg + 0x0030;
+}
+
+void PwmGenerator::setPWMCompare(uint32_t compare1, uint32_t compare2){
+
+	HRTIM1->sTimerxRegs[0].CMP1xR = compare1;
+	HRTIM1->sTimerxRegs[1].CMP2xR = compare2;
+}
+
+void PwmGenerator::calculateSinusParameters(SinusZDomain_t *sinObj, float fi_deg, uint32_t freq_khz, uint32_t f_sampling_khz){
+
+	sinObj->ff0 = sin((fi_deg/360.0f)*2*MATH_PI);
+	sinObj->ff1 = sin(2*MATH_PI*freq_khz/f_sampling_khz - (fi_deg/360.0)*2*MATH_PI);
+	sinObj->fb1 = 2*cos(2*MATH_PI*freq_khz / f_sampling_khz);
+	sinObj->fb2 = -1;
 }
 
 bool PwmGenerator::prerequest(){
