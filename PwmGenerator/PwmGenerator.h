@@ -19,6 +19,13 @@ class PwmGenerator : public IHardware{
 
 		float fb1;	// Feedback coef [n-1]
 		float fb2;	// Feedback coef [n-2]
+
+		float r_n;
+		float r_n1;
+		float r_n2;
+
+		float in;
+		float out;
 	}SinusZDomain_t;
 
 public:
@@ -55,6 +62,7 @@ protected:
 	uint32_t getPWMCompare2();
 
 	void calculateSinusParameters(SinusZDomain_t *sinObj, float fi_deg, uint32_t freq_khz, uint32_t f_sampling_khz);
+	float runSinusGeneratorFunction(SinusZDomain_t *sinObj);
 private:
 
 	uint32_t period_reg;
@@ -65,6 +73,9 @@ private:
 
 	SinusZDomain_t sin0;
 	SinusZDomain_t sin180;
+
+	float debug_o1[200];
+	float debug_o2[200];
 };
 
 #endif /* PWMGENERATOR_H_ */

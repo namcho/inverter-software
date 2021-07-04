@@ -15,8 +15,13 @@
 #define DEFAULT_MA		0.77f			// Default amplitude modulation index Ma/Mc
 
 PwmGenerator::PwmGenerator() {
-	// TODO Auto-generated constructor stub
 
+	// TODO Auto-generated constructor stub
+	this->sin0.in = 0.0f;
+	this->sin0.r_n1 = 1.0f;
+
+	this->sin180.in = 0.0f;
+	this->sin180.r_n1 = 1.0f;
 }
 
 PwmGenerator::~PwmGenerator() {
@@ -29,7 +34,7 @@ bool PwmGenerator::hardwareDeinit(){
 }
 
 bool PwmGenerator::hardwareInit(){
-
+	uint16_t i;
 	/// 1) IO configuration must be done first prior to HRTIM registers(Control, Period, interrept enbles, ... kind of things)
 	/// 2) HRTIM register configuration have to be done as second
 	/// 3) HRTIM output pins which is going to use for electrical PWM signals
@@ -44,39 +49,38 @@ bool PwmGenerator::hardwareInit(){
 	while(!((HRTIM1->sCommonRegs.ISR >> 16) && 0x01));	// Wait for calibration
 	HRTIM1->sCommonRegs.DLLCR |= (1 << 2);	// Periodic calibration is enabled
 
+	for (i = 0; i <= 1; ++i) {
+		// TIMA init
+		HRTIM1->sTimerxRegs[i].TIMxCR |= (1 << 3); 	// CONT bit set
+		HRTIM1->sTimerxRegs[i].TIMxCR |= (1 << 27);	// PREEN is set
+		HRTIM1->sTimerxRegs[i].TIMxCR |= (1 << 18);	// TxRSTU is set; Timerx roll-over reset is activated
 
-	// TIMA init
-	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 3); 	// CONT bit set
-	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 27);	// PREEN is set
-	HRTIM1->sTimerxRegs[0].TIMxCR |= (1 << 18);	// TxRSTU is set; Timerx roll-over reset is activated
+	//	HRTIM1->sTimerxRegs[i].PERxR = 40959;		// 100kHz
+	//	HRTIM1->sTimerxRegs[i].CMP1xR = 10279;		// %25 Duty
+		HRTIM1->sTimerxRegs[i].SETx1R |= (1 << 2);	// Set source is PER
+		HRTIM1->sTimerxRegs[i].RSTx1R |= (1 << 3);	// Reset source is CMP1
+		HRTIM1->sTimerxRegs[i].SETx1R |= (1 << 0);	// Set CHA1 output GPIO for proper startup
+		HRTIM1->sTimerxRegs[i].RSTx2R |= (1 << 0);	// Reset CHA2 output GPIO for proper startup
+		HRTIM1->sTimerxRegs[i].OUTxR |= (1 << 8);	// Deadtime is actived between CHA1 and CHA2
 
-//	HRTIM1->sTimerxRegs[0].PERxR = 40959;		// 100kHz
-//	HRTIM1->sTimerxRegs[0].CMP1xR = 10279;		// %25 Duty
-	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 2);	// Set source is PER
-	HRTIM1->sTimerxRegs[0].RSTx1R |= (1 << 3);	// Reset source is CMP1
-	HRTIM1->sTimerxRegs[0].SETx1R |= (1 << 0);	// Set CHA1 output GPIO for proper startup
-	HRTIM1->sTimerxRegs[0].RSTx2R |= (1 << 0);	// Reset CHA2 output GPIO for proper startup
-	HRTIM1->sTimerxRegs[0].OUTxR |= (1 << 8);	// Deadtime is actived between CHA1 and CHA2
+		HRTIM1->sTimerxRegs[i].DTxR |= (2 << 10);	// DTPRSSC is 2
+		HRTIM1->sTimerxRegs[i].DTxR |= 100;			// DTRx is 100; Rising edge deadtime
+		HRTIM1->sTimerxRegs[i].DTxR = (100 << 16);	// DTFx is 100; Falling edge deadtime
+		HRTIM1->sTimerxRegs[i].DTxR |= (2 << 4);	// CHA1 is inactive when fault occurs
+		HRTIM1->sTimerxRegs[i].DTxR |= (2 << 20);	// CHA2 is inactive when fault occurs
+	//	HRTIM1->sTimerxRegs[i].DTxR |= (1 << 19);	// CHA2 is in active when in IDLE state
+		HRTIM1->sTimerxRegs[i].DTxR |= (1 << 8);	// Deadtime enable
 
-	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 10);	// DTPRSSC is 2
-	HRTIM1->sTimerxRegs[0].DTxR |= 100;			// DTRx is 100; Rising edge deadtime
-	HRTIM1->sTimerxRegs[0].DTxR = (100 << 16);	// DTFx is 100; Falling edge deadtime
-	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 4);	// CHA1 is inactive when fault occurs
-	HRTIM1->sTimerxRegs[0].DTxR |= (2 << 20);	// CHA2 is inactive when fault occurs
-//	HRTIM1->sTimerxRegs[0].DTxR |= (1 << 19);	// CHA2 is in active when in IDLE state
-	HRTIM1->sTimerxRegs[0].DTxR |= (1 << 8);	// Deadtime enable
+		HRTIM1->sTimerxRegs[i].RSTx1R |= HRTIM_RST1R_SRT;
+		HRTIM1->sTimerxRegs[i].SETx2R |= HRTIM_SET2R_SST;
+	}
 
-	HRTIM1->sTimerxRegs[0].RSTx1R |= HRTIM_RST1R_SRT;
-	HRTIM1->sTimerxRegs[0].SETx2R |= HRTIM_SET2R_SST;
 
-	HRTIM1->sTimerxRegs[0].REPxR = 1;
+	HRTIM1->sTimerxRegs[0].REPxR = 9;
 	HRTIM1->sTimerxRegs[0].TIMxDIER |= (1 << 4);	// Repetation interrupt is enabled.
 	NVIC->ISER[3] |= (1 << 4);
 	NVIC_EnableIRQ(HRTIM1_TIMA_IRQn);
 
-	setPWMFreq(100);
-	setPWMDeadtime(100);
-	setPWMCompare(getPWMPeriod() / 4, getPWMPeriod() / 2);
 	// If wanna start HRTIM with DMA support, we need to set specific EN bit in CR register...
 
 	// Built-in comperators must be initialized(if need to use) before output routed to HRTIM
@@ -123,12 +127,16 @@ bool PwmGenerator::hardwareInit(){
 	/// Other perhipherals can be initialized
 	// NVIC, DMA, Comperator vs...
 
-	HRTIM1->sCommonRegs.OENR |= 0x000F;			// CHA1, CHA2, CHB1 and CHB2 is enabled
-	HRTIM1->sCommonRegs.CR2 |= (1 << 1);		// Software update for TA to transfer preload -> active
-	HRTIM1->sMasterRegs.MCR |= (1 << 17);		// TA is enabled
+	setPWMFreq(100);
+	setPWMDeadtime(100);
+	setPWMCompare(getPWMPeriod() / 4, getPWMPeriod() / 2);
 
 	calculateSinusParameters(&sin0, 0.0f, 100, 10);
 	calculateSinusParameters(&sin180, 180.0f, 100, 10);
+
+	HRTIM1->sCommonRegs.OENR |= 0x000F;			// CHA1, CHA2, CHB1 and CHB2 is enabled
+	HRTIM1->sCommonRegs.CR2 |= (1 << 1);		// Software update for TA to transfer preload -> active
+	HRTIM1->sMasterRegs.MCR |= (3 << 17);		// TA is enabled
 
 	return true;
 }
@@ -183,6 +191,9 @@ void PwmGenerator::setPWMDeadtime(uint32_t dt_ns){
 	HRTIM1->sTimerxRegs[0].DTxR |= (dt_rising);
 	HRTIM1->sTimerxRegs[0].DTxR |= (dt_falling << 16);
 
+	HRTIM1->sTimerxRegs[1].DTxR &= ~(0x01FF01FF);
+	HRTIM1->sTimerxRegs[1].DTxR |= (dt_rising);
+	HRTIM1->sTimerxRegs[1].DTxR |= (dt_falling << 16);
 }
 
 uint32_t PwmGenerator::getPWMDeadtime(){
@@ -192,19 +203,39 @@ uint32_t PwmGenerator::getPWMDeadtime(){
 
 void PwmGenerator::runController(){
 
-	// Generate sinus duty values
+	float la, lb;
+	static uint16_t i = 0;
 
+	// Generate sinus duty values
+	la = runSinusGeneratorFunction(&sin0) + 1.0f;
+	lb = runSinusGeneratorFunction(&sin180) + 1.0f;
+
+	debug_o1[i] = la;
+	debug_o2[i] = lb;
+	i++;
+	if(i >= 200){
+		i = 0;
+	}
+
+	this->compare1_reg = (la / 2) * getPWMPeriod() * DEFAULT_MA;
+	this->compare2_reg = (lb / 2) * getPWMPeriod() * DEFAULT_MA;
+
+	setPWMCompare();
 }
 
 void PwmGenerator::runStateMachine(){
 
+	// State machine function for non-time critical tasks...
+	// For example, change frequency of referans sinus
 
+
+	// Request list olacak ve request geldikce, ilgili requestler icin gerekli islemler sirasiyla yapilacak...
 }
 
 void PwmGenerator::setPWMCompare(){
 
-	HRTIM1->sTimerxRegs[0].CMP1xR = compare1_reg + 0x0030;
-	HRTIM1->sTimerxRegs[1].CMP1xR = compare2_reg + 0x0030;
+	HRTIM1->sTimerxRegs[0].CMP1xR = compare1_reg + 0x0220;
+	HRTIM1->sTimerxRegs[1].CMP1xR = compare2_reg + 0x0220;
 }
 
 void PwmGenerator::setPWMCompare(uint32_t compare1, uint32_t compare2){
@@ -219,6 +250,18 @@ void PwmGenerator::calculateSinusParameters(SinusZDomain_t *sinObj, float fi_deg
 	sinObj->ff1 = sin(2*MATH_PI*freq_khz/f_sampling_khz - (fi_deg/360.0)*2*MATH_PI);
 	sinObj->fb1 = 2*cos(2*MATH_PI*freq_khz / f_sampling_khz);
 	sinObj->fb2 = -1;
+}
+
+float PwmGenerator::runSinusGeneratorFunction(SinusZDomain_t *sinObj){
+
+	sinObj->r_n = sinObj->in + sinObj->fb1 * sinObj->r_n1 + sinObj->fb2 * sinObj->r_n2;
+	sinObj->out = sinObj->ff0 * sinObj->r_n + sinObj->ff1 * sinObj->r_n1;
+
+	sinObj->r_n2 = sinObj->r_n1;
+	sinObj->r_n1 = sinObj->r_n;
+
+	// Add offset voltage for Sinus output
+	return sinObj->out;
 }
 
 bool PwmGenerator::prerequest(){
