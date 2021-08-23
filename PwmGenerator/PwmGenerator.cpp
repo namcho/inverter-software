@@ -126,9 +126,21 @@ bool PwmGenerator::hardwareInit(){
 
 	/// Other perhipherals can be initialized
 	// NVIC, DMA, Comperator vs...
+	// Driver2 enable pin
+	GPIOA->MODER &= ~(3 << 10);
+	GPIOA->MODER |= (1 << 10);
+	GPIOA->OTYPER &= ~(1 << 5);
+	GPIOA->OSPEEDR |= (3 << 10);
+	GPIOA->BSRR = (1 << 21);
+	// Driver2 enable pin
+	GPIOA->MODER &= ~(3 << 12);
+	GPIOA->MODER |= (1 << 12);
+	GPIOA->OTYPER &= ~(1 << 6);
+	GPIOA->OSPEEDR |= (3 << 12);
+	GPIOA->BSRR = (1 << 22);
 
 	setPWMFreq(100);
-	setPWMDeadtime(100);
+	setPWMDeadtime(30);
 	setPWMCompare(getPWMPeriod() / 4, getPWMPeriod() / 2);
 
 	calculateSinusParameters(&sin0, 0.0f, 100, 10);
@@ -204,18 +216,10 @@ uint32_t PwmGenerator::getPWMDeadtime(){
 void PwmGenerator::runController(){
 
 	float la, lb;
-	static uint16_t i = 0;
 
 	// Generate sinus duty values
 	la = runSinusGeneratorFunction(&sin0) + 1.0f;
 	lb = runSinusGeneratorFunction(&sin180) + 1.0f;
-
-	debug_o1[i] = la;
-	debug_o2[i] = lb;
-	i++;
-	if(i >= 200){
-		i = 0;
-	}
 
 	this->compare1_reg = (la / 2) * getPWMPeriod() * DEFAULT_MA;
 	this->compare2_reg = (lb / 2) * getPWMPeriod() * DEFAULT_MA;

@@ -155,27 +155,6 @@ void SysTick_Handler(void)
 	signal_ms = 1;
 	systick++;
 }
-
-void HRTIM1_TIMA_IRQHandler(void){
-
-	static uint32_t toggle;
-	// Clear repetation flag
-	HRTIM1->sTimerxRegs[0].TIMxICR |= (1 << 4);
-
-//	if(toggle % 2){
-//		GPIOA->BSRR = (1 << 8);
-//		GPIOA->BSRR = (1 << 9);
-//		GPIOB->BSRR = (1 << 4);
-//	}
-//	else{
-//		GPIOA->BSRR = (1 << 24);
-//		GPIOA->BSRR = (1 << 25);
-//		GPIOB->BSRR = (1 << 20);
-//	}
-
-	toggle++;
-}
-
 /******************************************************************************/
 /* STM32F3xx Peripheral Interrupt Handlers                                    */
 /* Add here the Interrupt Handlers for the used peripherals.                  */

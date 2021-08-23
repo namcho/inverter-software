@@ -58,6 +58,29 @@ bool LedIndicator::hardwareInit(){
 	GPIOB->OSPEEDR &= ~(3 << 14);
 	GPIOB->OSPEEDR |= (3 << 14);
 
+	// RS485-LED
+	GPIOB->MODER &= ~(3 << 8);
+	GPIOB->MODER |= (1 << 8);
+	GPIOB->OTYPER &= ~(1 << 4);
+	GPIOB->OSPEEDR &= ~(3 << 8);
+	GPIOB->OSPEEDR |= (3 << 8);
+
+	// PB13 FAN2 Enable
+	GPIOB->MODER &= ~(3 << 26);
+	GPIOB->MODER |= (1 << 26);
+	GPIOB->OTYPER &= ~(1 << 13);
+	GPIOB->OSPEEDR &= ~(3 << 26);
+	GPIOB->OSPEEDR |= (3 << 26);
+	GPIOB->BSRR = (1 << 13);
+
+	// PA7 FAN1 Enable
+	RCC->AHBENR |= (1 << 17);
+	GPIOA->MODER &= ~(3 << 14);
+	GPIOA->MODER |= (1 << 14);
+	GPIOA->OTYPER &= ~(1 << 7);
+	GPIOA->OSPEEDR &= ~(3 << 14);
+	GPIOA->OSPEEDR |= (3 << 14);
+	GPIOA->BSRR = (1 << 7);
 
 	return true;
 }
@@ -71,6 +94,7 @@ void LedIndicator::indicationStateMachine(){
 		GPIOB->BSRR = (1 << 24);
 		GPIOB->BSRR = (1 << 25);
 		GPIOB->BSRR = (1 << 23);
+		GPIOB->BSRR = (1 << 20);
 
 		setLedState(LED_STATE_WAIT);
 		ticker_end = getTicker() + period;
@@ -88,6 +112,7 @@ void LedIndicator::indicationStateMachine(){
 		GPIOB->BSRR = (1 << 8);
 		GPIOB->BSRR = (1 << 9);
 		GPIOB->BSRR = (1 << 7);
+		GPIOB->BSRR = (1 << 4);
 
 		setLedState(LED_STATE_WAIT);
 		ticker_end = getTicker() + period;

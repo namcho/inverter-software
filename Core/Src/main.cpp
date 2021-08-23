@@ -44,7 +44,7 @@ int main(void)
   MX_GPIO_Init();
 
   leds.hardwareInit();
-  leds.setLedBlinkPeriod(50);
+  leds.setLedBlinkPeriod(500);
 
   pwmGenerator.hardwareInit();
 
@@ -88,7 +88,7 @@ void SystemClock_Config(void)
 //
 //  }
 
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_2, LL_RCC_PLL_MUL_16);	// PLL-CLK 72MHz eger HSE 16MHz ise
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE_DIV_4, LL_RCC_PLL_MUL_16);	// PLL-CLK 72MHz eger HSE 16MHz ise
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
@@ -159,6 +159,27 @@ void DelayMs(uint32_t ms){
 		}
 	}
 }
+
+void HRTIM1_TIMA_IRQHandler(void){
+
+	static uint32_t toggle;
+	// Clear repetation flag
+	HRTIM1->sTimerxRegs[0].TIMxICR |= (1 << 4);
+
+//	if(toggle % 2){
+//		GPIOA->BSRR = (1 << 8);
+//		GPIOA->BSRR = (1 << 9);
+//		GPIOB->BSRR = (1 << 4);
+//	}
+//	else{
+//		GPIOA->BSRR = (1 << 24);
+//		GPIOA->BSRR = (1 << 25);
+//		GPIOB->BSRR = (1 << 20);
+//	}
+	pwmGenerator.runController();
+	toggle++;
+}
+
 
 #ifdef  USE_FULL_ASSERT
 /**
